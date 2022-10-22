@@ -64,7 +64,7 @@ export class Meals {
 				meal.protein,
 				meal.carbs,
 				meal.fat,
-				this.handleBoolean(meal.calories),
+				meal.calories,
 				this.handleBoolean(meal.breakfast),
 				this.handleBoolean(meal.lunch),
 				this.handleBoolean(meal.dinner),
@@ -171,6 +171,7 @@ export class Meals {
 		const args = parseArgs(array)
 
 		if(command === 'add'){
+			console.log(args)
 			if(!args._[0] || !args._[1]) throw new Error('...provide a name and calorie count')
 			const meal = this.addMeal({
 				name: args._[0],
@@ -180,19 +181,19 @@ export class Meals {
 				carbs: args.c,
 				fat: args.f,
 				calories: args._[1],
-				breakfast: args.b,
-				lunch: args.l,
-				dinner: args.d,
-				snack: args.s,
+				breakfast: args.breakfast,
+				lunch: args.lunch,
+				dinner: args.dinner,
+				snack: args.snack,
 			})
 			return "added meal"
 		}
 		if(command === 'get'){
 			return this.get(args._[0].toString(), {
-				b: args.b,
-				l: args.l,
-				d: args.d,
-				s: args.s,
+				b: args.breakfast,
+				l: args.lunch,
+				d: args.dinner,
+				s: args.snack,
 			})
 		}
 

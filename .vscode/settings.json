@@ -1,0 +1,14 @@
+{
+	"files.exclude": {
+		"**/.git": true,
+		"**/.svn": true,
+		"**/.hg": true,
+		"**/CVS": true,
+		"**/.DS_Store": true,
+		"**/Thumbs.db": true
+	},
+	"hide-files.files": [],
+	"deno.enable": true,
+	"deno.unstable": true,
+	"deno.importMap": "./import_map.json"
+}

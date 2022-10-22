@@ -55,7 +55,7 @@ export class Meals {
 	}
 
 	addMeal(meal: TMeal) {
-		this.db.query(
+		const query = this.db.query(
 			"INSERT INTO meals (name, date, notes, protein, carbs, fat, calories, breakfast, lunch, dinner, snack) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 			[
 				meal.name,
@@ -71,6 +71,7 @@ export class Meals {
 				this.handleBoolean(meal.snack),
 			]
 		);
+		return query;
 	}
 	updateMeal({ id, name, newState }: TUpdateMeal) {
 		const data = this.db.queryEntries(
@@ -110,31 +111,18 @@ export class Meals {
 	getAllMeals() {
 		return this.db.queryEntries("SELECT * from meals");
 	}
-	get(params: string[]) {
-		// Options
-		// 1. Get all meals: 'all'
-		// 2. Get meals by date: '03/01/2021'
-		// 3. Get meals by day: "Today, Yesterday, # days ago"
-		// 4. Get meals by name: 'name'
-		// 5. Get meals by id: 'id'
-		// filter all meals by flag
-		// Will also need to deal with range
-
-		const args = parseArgs(params);
-
-		const filters: TFilters = {
-			useFilters: args.b || args.l || args.d || args.s,
-			b: args.b,
-			l: args.l,
-			d: args.d,
-			s: args.s,
-		};
-		if (args._[0] === "all") {
+	get(command: string, _filters?: {
+		b: boolean;
+		l: boolean;
+		d: boolean;
+		s: boolean;
+	}) {
+		if (command === "all") {
 			const query = this.db.queryEntries("SELECT * from meals");
 			return query;
 		}
-		if (this.stringIsValidDate(args._[0] as string)) {
-			const unformattedDate = (args._[0] as string)
+		if (this.stringIsValidDate(command)) {
+			const unformattedDate = (command)
 				.replaceAll("/", "-")
 				.replaceAll(".", "-");
 			const date = parseDate(unformattedDate, "dd-MM-yyyy");
@@ -143,54 +131,48 @@ export class Meals {
 			]);
 			return query;
 		}
-		if (args._[0] === "today") {
+		if (command === "today") {
 			const query = this.db.queryEntries("SELECT * from meals WHERE date like ?", [
 				new Date().toISOString().split("T")[0] + "%",
 			]);
 			return query;
 		}
-		if (args._[0] === "yesterday") {
+		if (command === "yesterday") {
 			const query = this.db.queryEntries("SELECT * from meals WHERE date like ?", [
 				this.getPreviousDay().toISOString().split("T")[0] + "%",
 			]);
 			return query;
 		}
-		if (
-			(args._[1] === "days ago" || args._[1] === "day ago") &&
-			typeof args._[0] === "number"
-		) {
-			console.log(
-				this.getPreviousDay(args._[0]).toISOString().split("T")[0] + "%"
-			);
-			const query = this.db.queryEntries("SELECT * from meals WHERE date like ?", [
-				this.getPreviousDay(args._[0]).toISOString().split("T")[0] + "%",
-			]);
-			return query;
-		}
-		if (args._[0] === "range") {
+		// if (
+		// 	(args._[1] === "days ago" || args._[1] === "day ago") &&
+		// 	typeof args._[0] === "number"
+		// ) {
+		// 	console.log(
+		// 		this.getPreviousDay(args._[0]).toISOString().split("T")[0] + "%"
+		// 	);
+		// 	const query = this.db.queryEntries("SELECT * from meals WHERE date like ?", [
+		// 		this.getPreviousDay(args._[0]).toISOString().split("T")[0] + "%",
+		// 	]);
+		// 	return query;
+		// }
+		if (command === "range") {
 			// Get meals by range
 		}
-		if (typeof args._[0] === "string") {
+		if (typeof command === "string") {
 			const query = this.db.queryEntries("SELECT * from meals WHERE name=?", [
-				args._[0],
+				command,
 			]);
-			return query;
-		}
-		if (typeof args._[0] === "number") {
-			const query = this.db.queryEntries("SELECT * from meals WHERE id=?", [
-				args._[0],
-			])
 			return query;
 		}
 	}
 	parseCommand(input: string) {
-
 		const array = input.split(" ")
 		const command = array.splice(0, 1)[0];
 		const args = parseArgs(array)
+
 		if(command === 'add'){
-			// add mealName -p 10 -c 10 -f 10 -b -l -d -s
-			this.addMeal({
+			if(!args._[0] || !args._[1]) throw new Error('...provide a name and calorie count')
+			const meal = this.addMeal({
 				name: args._[0],
 				date: this.stringIsValidDate(args.date) ? parseDate(args.date, "dd-MM-yy").toISOString() : new Date().toISOString(),
 				notes: args.notes,
@@ -203,6 +185,17 @@ export class Meals {
 				dinner: args.d,
 				snack: args.s,
 			})
+			return "added meal"
 		}
+		if(command === 'get'){
+			return this.get(args._[0].toString(), {
+				b: args.b,
+				l: args.l,
+				d: args.d,
+				s: args.s,
+			})
+		}
+
+		throw new Error("...unknown command")
 	}
 }
